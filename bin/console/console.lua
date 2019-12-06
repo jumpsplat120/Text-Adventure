@@ -6,7 +6,6 @@ local path   = ...
 local folder = string.match(path, ".*/") or ""
 
 local inspect = require(folder .. "inspect")
-local socket  = require("socket")
 
 --[[
 				   ____ ___  _   _ ____   ___  _     _____ 
@@ -182,6 +181,10 @@ function console.load()
 	
 	priv.lines.changed = false
 	priv.lines.amount  = 0
+	
+	------STARTING CALLBACK------
+
+	if console.starting then console.print(console.starting) end
 end
 
 function console.update(dt)
@@ -217,7 +220,12 @@ function console.update(dt)
 		console.text.str[#console.text.str + 1] = "> " .. text
 		console.text.color[#console.text.color + 1] = {1,1,1,1}
 
-		if response == nil then
+		if response then
+			if type(response) == "string" then
+				console.text.str[#console.text.str + 1] = response
+				console.text.color[#console.text.color + 1] = {1,1,1,1}
+			end
+		else
 			local func, err = loadstring(text)
 			if err then
 				console.text.str[#console.text.str + 1] = err
@@ -229,9 +237,6 @@ function console.update(dt)
 					console.text.color[#console.text.color + 1] = {1,1,0,1}
 				end
 			end
-		else
-			console.text.str[#console.text.str + 1] = output
-			console.text.color[#console.text.color + 1] = {1,1,1,1}
 		end
 		
 		console.history[#console.history + 1] = console.input
@@ -567,9 +572,9 @@ function console.print(str)
 	if     type == "string" then
 		console.text.str[#console.text.str + 1] = str
 	elseif type == "number" or type == "boolean" or type == "nil" then
-		console.text.str[#console.text.str + 1].str = tostring(str)
+		console.text.str[#console.text.str + 1] = tostring(str)
 	elseif type == "table" then
-		console.text.str[#console.text.str + 1].str = inspect(str)
+		console.text.str[#console.text.str + 1] = inspect(str)
 	end
 	console.text.color[#console.text.color + 1] = {1,1,1,1}
 	
@@ -661,6 +666,10 @@ end
 
 function console.readwrite(text)
 	return text
+end
+
+function console.startWith(text)
+	console.starting = text or false
 end
 
 -----TABLE COPY FUNCTION-----

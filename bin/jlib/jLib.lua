@@ -28,22 +28,22 @@ local inspect = require(folder .. "inspect")
 local jLib    = {
 	window = {},
 	color  = {
-		clear      = {0,0,0,0}    --NO COLOR
-		white      = {1,1,1,1}    --#FFFFFF
-		grey       = {.5,.5,.5,1} --#7F7F7F
-		gray       = {.5,.5,.5,1} --#7F7F7F
-		black      = {0,0,0,1}    --#000000
-		red        = {1,0,0,1}    --#FF0000
-		green      = {0,1,0,1}    --#00FF00
-		blue       = {0,0,1,1}    --#0000FF
-		yellow     = {1,1,0,1}    --#FFFF00
-		magenta    = {1,0,1,1}    --#FF00FF
-		light_blue = {0,1,1,1}    --#00FFFF
-		purple     = {.5,0,1,1}   --#FF6600
-		orange     = {1,.5,0,1}   --#6600FF 
+		clear      = {0,0,0,0},    --NO COLOR
+		white      = {1,1,1,1},    --#FFFFFF
+		grey       = {.5,.5,.5,1}, --#7F7F7F
+		gray       = {.5,.5,.5,1}, --#7F7F7F
+		black      = {0,0,0,1},    --#000000
+		red        = {1,0,0,1},    --#FF0000
+		green      = {0,1,0,1},    --#00FF00
+		blue       = {0,0,1,1},    --#0000FF
+		yellow     = {1,1,0,1},    --#FFFF00
+		magenta    = {1,0,1,1},    --#FF00FF
+		light_blue = {0,1,1,1},    --#00FFFF
+		purple     = {.5,0,1,1},   --#FF6600
+		orange     = {1,.5,0,1}    --#6600FF 
 	},
 	mouse  = {
-		x = love.mouse.getX()
+		x = love.mouse.getX(),
 		y = love.mouse.getY()
 	},
 	error  = {
@@ -53,7 +53,7 @@ local jLib    = {
 		message    = "Default Error Message"
 	},
 	time   = {
-		runtime = 0
+		runtime = 0,
 		dt      = 0
 	},
 	logging = true
@@ -183,23 +183,15 @@ function jLib.RGBtoHSV(r, g, b)
 	
 	v = max
 	
-	if not (max == 0) then
+	if max == 0 then
+		return -1, 0, v
+	else
 		s = vdt / max
-		if r == max then
-			h = (g - b) / vdt
-		elseif g == max then
-			h = 2 + (b - r) / vdt
-		else
-			h = 4 + (r - g) / vdt
-		end
-		
+		h = r == max and (g - b) / vdt or g == max and 2 + (b - r) / vdt or 4 + (r - g) / vdt
 		h = h * 60
-		
-		if h < 0 then h = h + 360 end
+		h = h < 0 and h + 360 or h
 		
 		return h, s, v
-	else 
-		return -1, 0, v
 	end
 end
 
@@ -210,6 +202,7 @@ function jLib.HSVtoRGB(h, s, v)
 	--HUE_SECTOR, HUE_SECTOR_OFFSET
 	local hsec, hsecoff
 	local p, q, t
+	local arr, res
 	
 	hsec = math.floor(h / 60)
 	hsecoff = (h / 60) - hsec
@@ -217,14 +210,17 @@ function jLib.HSVtoRGB(h, s, v)
 	p = v * (1 - s)
 	q = v * (1 - s * hsecoff)
 	t = v * (1 - s * (1 - hsecoff))
-
-	if     hsec == 0 then return v, t, p
-	elseif hsec == 1 then return q, v, p
-	elseif hsec == 2 then return p, v, t
-	elseif hsec == 3 then return p, q, v
-	elseif hsec == 4 then return t, p, v
-	elseif hsec == 5 then return v, p, q
-	end
+	
+	arr = {{v, t, p},
+		   {q, v, p},
+		   {p, v, t},
+		   {p, q, v},
+		   {t, p, v},
+		   {v, p, q}}
+	
+	res = arr[hsec]
+	
+	return res[1], res[2], res[3]
 end
 
 --Returns a cycling sine wave that starts at zero, and goes up to 'size' and down to '-size' at 'speed' cycles a second. Use offset to change when it starts cycling, to avoid all instances of jLib.sineWave cycling at the same time.
@@ -234,6 +230,16 @@ function jLib.sineWave(size, speed, offset)
 	local offset = offset or 0
 	
 	return math.sin((jLib.time.runtime + offset) * speed) * size
+end
+
+--Rounds a number with no decimals
+function jLib.round(num)
+	return math.floor(num + 0.5)
+end
+
+--Increment a number. Shortens the num = num + 1 that I keep writing everywhere
+function jLib.inc(n)
+	return n + 1
 end
 
 --Simple helper function that returns a string timestamp of the moment the function was called. Used internally for jLib.log
